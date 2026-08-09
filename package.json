@@ -1,0 +1,19 @@
+{
+  "name": "vocallabs-call-flow-builder",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Seed and verification scripts for the VocalLabs Intelligent Call Flow Builder demo",
+  "scripts": {
+    "seed": "tsx seeds/seed.ts",
+    "verify": "tsx scripts/verify.ts",
+    "verify:security": "tsx scripts/verify-security.ts"
+  },
+  "dependencies": {
+    "graphql-request": "^6.1.0"
+  },
+  "devDependencies": {
+    "tsx": "^4.16.0",
+    "typescript": "^5.5.0",
+    "@types/node": "^22.0.0"
+  }
+}

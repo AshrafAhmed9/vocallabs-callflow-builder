@@ -1,0 +1,71 @@
+table:
+  schema: public
+  name: org_members
+object_relationships:
+  - name: organization
+    using:
+      foreign_key_constraint_on: org_id
+  - name: user
+    using:
+      manual_configuration:
+        remote_table:
+          schema: auth
+          name: users
+        column_mapping:
+          user_id: id
+select_permissions:
+  - role: owner
+    permission:
+      columns: [id, org_id, user_id, role, created_at]
+      filter:
+        organization:
+          members:
+            _and:
+              - user_id: { _eq: X-Hasura-User-Id }
+              - role: { _eq: owner }
+  - role: editor
+    permission:
+      columns: [id, org_id, user_id, role, created_at]
+      filter:
+        organization:
+          members:
+            _and:
+              - user_id: { _eq: X-Hasura-User-Id }
+              - role: { _in: [owner, editor] }
+  - role: viewer
+    permission:
+      columns: [id, org_id, user_id, role, created_at]
+      filter:
+        organization:
+          members:
+            user_id: { _eq: X-Hasura-User-Id }
+insert_permissions:
+  - role: owner
+    permission:
+      check:
+        organization:
+          members:
+            _and:
+              - user_id: { _eq: X-Hasura-User-Id }
+              - role: { _eq: owner }
+      columns: [org_id, user_id, role]
+update_permissions:
+  - role: owner
+    permission:
+      columns: [role]
+      filter:
+        organization:
+          members:
+            _and:
+              - user_id: { _eq: X-Hasura-User-Id }
+              - role: { _eq: owner }
+      check: null
+delete_permissions:
+  - role: owner
+    permission:
+      filter:
+        organization:
+          members:
+            _and:
+              - user_id: { _eq: X-Hasura-User-Id }
+              - role: { _eq: owner }

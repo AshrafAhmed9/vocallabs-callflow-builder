@@ -1,0 +1,43 @@
+table:
+  schema: public
+  name: step_runs
+object_relationships:
+  - name: run
+    using:
+      foreign_key_constraint_on: workflow_run_id
+  - name: step
+    using:
+      foreign_key_constraint_on: step_id
+  - name: org
+    using:
+      foreign_key_constraint_on: org_id
+select_permissions:
+  - role: owner
+    permission:
+      columns: [id, workflow_run_id, step_id, org_id, status, input, output, error, attempt, latency_ms, tokens_used, approved_by, approved_at, started_at, finished_at]
+      filter:
+        org:
+          members:
+            _and:
+              - user_id: { _eq: X-Hasura-User-Id }
+              - role: { _eq: owner }
+  - role: editor
+    permission:
+      columns: [id, workflow_run_id, step_id, org_id, status, input, output, error, attempt, latency_ms, tokens_used, approved_by, approved_at, started_at, finished_at]
+      filter:
+        org:
+          members:
+            _and:
+              - user_id: { _eq: X-Hasura-User-Id }
+              - role: { _in: [owner, editor] }
+  - role: viewer
+    permission:
+      columns: [id, workflow_run_id, step_id, org_id, status, input, output, error, attempt, latency_ms, tokens_used, approved_by, approved_at, started_at, finished_at]
+      filter:
+        org:
+          members:
+            user_id: { _eq: X-Hasura-User-Id }
+# No client-facing insert/update/delete: step_runs are only written by the
+# admin-client executor (functions/_lib/executor.ts), which uses GraphQL
+# mutations (so subscriptions fire) but re-checks authorization in code
+# before doing so (see approve-step and trigger-workflow-run handlers).

@@ -1,9 +1,15 @@
 {
   "name": "functions",
   "version": "1.0.0",
-  "description": "",
+  "description": "Nhost serverless functions for the VocalLabs Intelligent Call Flow Builder",
   "main": "index.js",
-  "devDependencies": {},
+  "dependencies": {
+    "graphql-request": "^6.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.5.0"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },

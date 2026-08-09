@@ -1,0 +1,104 @@
+table:
+  schema: public
+  name: workflow_triggers
+object_relationships:
+  - name: workflow
+    using:
+      foreign_key_constraint_on: workflow_id
+select_permissions:
+  - role: owner
+    permission:
+      columns: [id, workflow_id, type, config, webhook_token, enabled, created_at]
+      filter:
+        workflow:
+          org:
+            members:
+              _and:
+                - user_id: { _eq: X-Hasura-User-Id }
+                - role: { _eq: owner }
+  - role: editor
+    permission:
+      # webhook_token intentionally excluded for editor: editors cannot create
+      # webhook triggers, so they should not be able to read secrets either.
+      columns: [id, workflow_id, type, config, enabled, created_at]
+      filter:
+        workflow:
+          org:
+            members:
+              _and:
+                - user_id: { _eq: X-Hasura-User-Id }
+                - role: { _in: [owner, editor] }
+  - role: viewer
+    permission:
+      columns: [id, workflow_id, type, config, enabled, created_at]
+      filter:
+        workflow:
+          org:
+            members:
+              user_id: { _eq: X-Hasura-User-Id }
+insert_permissions:
+  - role: owner
+    permission:
+      columns: [workflow_id, type, config, enabled]
+      check:
+        workflow:
+          org:
+            members:
+              _and:
+                - user_id: { _eq: X-Hasura-User-Id }
+                - role: { _eq: owner }
+  - role: editor
+    permission:
+      columns: [workflow_id, type, config, enabled]
+      check:
+        _and:
+          - workflow:
+              org:
+                members:
+                  _and:
+                    - user_id: { _eq: X-Hasura-User-Id }
+                    - role: { _in: [owner, editor] }
+          - type: { _neq: webhook }
+update_permissions:
+  - role: owner
+    permission:
+      columns: [type, config, enabled]
+      filter:
+        workflow:
+          org:
+            members:
+              _and:
+                - user_id: { _eq: X-Hasura-User-Id }
+                - role: { _eq: owner }
+      check: null
+  - role: editor
+    permission:
+      columns: [config, enabled]
+      filter:
+        _and:
+          - workflow:
+              org:
+                members:
+                  _and:
+                    - user_id: { _eq: X-Hasura-User-Id }
+                    - role: { _in: [owner, editor] }
+          - type: { _neq: webhook }
+      check:
+        _and:
+          - workflow:
+              org:
+                members:
+                  _and:
+                    - user_id: { _eq: X-Hasura-User-Id }
+                    - role: { _in: [owner, editor] }
+          - type: { _neq: webhook }
+delete_permissions:
+  - role: owner
+    permission:
+      filter:
+        workflow:
+          org:
+            members:
+              _and:
+                - user_id: { _eq: X-Hasura-User-Id }
+                - role: { _eq: owner }
