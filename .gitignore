@@ -1,0 +1,13 @@
+.nhost
+.secrets
+.secrets.*
+!.secrets.example
+node_modules/
+.next/
+.env
+.env.*
+!.env.example
+*.log
+.DS_Store
+functions/node_modules/
+app/node_modules/
