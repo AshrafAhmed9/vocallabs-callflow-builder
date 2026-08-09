@@ -21,7 +21,7 @@ async function sleep(ms: number) {
 }
 
 async function main() {
-  const owner = await signIn("a-owner@vocallabs.demo");
+  const owner = await signIn("a-owner@vocallabs.demo", undefined, "owner");
 
   const wfData: any = await owner.client.request(gql`
     query {
@@ -54,10 +54,16 @@ async function main() {
   console.log(`  run_id=${runId} initial status=${triggerData.triggerWorkflowRun.status}`);
 
   // Poll until the run pauses at the approval gate (or completes/fails).
+  // Execution is synchronous, so the trigger call may already return a
+  // terminal/paused status — always fetch step_runs at least once.
   let runStatus = triggerData.triggerWorkflowRun.status;
   let stepRuns: any[] = [];
-  for (let i = 0; i < 30 && runStatus !== "paused" && runStatus !== "completed" && runStatus !== "failed"; i++) {
-    await sleep(500);
+  for (
+    let i = 0;
+    i === 0 || (i < 30 && runStatus !== "paused" && runStatus !== "completed" && runStatus !== "failed");
+    i++
+  ) {
+    if (i > 0) await sleep(500);
     const poll: any = await owner.client.request(
       gql`
         query ($runId: uuid!) {
@@ -124,8 +130,8 @@ async function main() {
 
   // Poll until completed/failed.
   runStatus = approveData.approveStep.run_status;
-  for (let i = 0; i < 30 && runStatus !== "completed" && runStatus !== "failed"; i++) {
-    await sleep(500);
+  for (let i = 0; i === 0 || (i < 30 && runStatus !== "completed" && runStatus !== "failed"); i++) {
+    if (i > 0) await sleep(500);
     const poll: any = await owner.client.request(
       gql`
         query ($runId: uuid!) {

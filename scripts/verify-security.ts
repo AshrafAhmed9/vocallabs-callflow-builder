@@ -332,8 +332,9 @@ async function main() {
       { id: orgAId, used: before.quota_limit - 1 }
     );
 
+    const ownerRoleClient = withRole(aOwner, "owner");
     const results = await Promise.allSettled([
-      aOwner.client.request(
+      ownerRoleClient.request(
         gql`
           mutation ($id: uuid!) {
             triggerWorkflowRun(workflow_id: $id) {
@@ -344,7 +345,7 @@ async function main() {
         `,
         { id: workflow.id }
       ),
-      aOwner.client.request(
+      ownerRoleClient.request(
         gql`
           mutation ($id: uuid!) {
             triggerWorkflowRun(workflow_id: $id) {
@@ -356,6 +357,58 @@ async function main() {
         { id: workflow.id }
       ),
     ]);
+
+    // The seeded demo workflow has an approval_gate, so both runs pause
+    // rather than complete — and quota is only consumed on completion (see
+    // executor.ts). Approve both through their gate so this test can
+    // actually observe the atomic consume_org_quota race at completion.
+    const runIds = results
+      .filter((r): r is PromiseFulfilledResult<any> => r.status === "fulfilled")
+      .map((r) => r.value.triggerWorkflowRun.run_id);
+
+    for (const runId of runIds) {
+      const stepData: any = await admin.request(
+        gql`
+          query ($runId: uuid!) {
+            step_runs(where: { workflow_run_id: { _eq: $runId }, step: { type: { _eq: "approval_gate" } } }, limit: 1) {
+              id
+            }
+          }
+        `,
+        { runId }
+      );
+      const gateStepRunId = stepData.step_runs[0]?.id;
+      if (gateStepRunId) {
+        await ownerRoleClient
+          .request(
+            gql`
+              mutation ($stepRunId: uuid!) {
+                approveStep(step_run_id: $stepRunId) {
+                  run_status
+                }
+              }
+            `,
+            { stepRunId: gateStepRunId }
+          )
+          .catch(() => {});
+      }
+    }
+
+    // Poll until both runs reach a terminal state.
+    for (let i = 0; i < 20; i++) {
+      const poll: any = await admin.request(
+        gql`
+          query ($ids: [uuid!]!) {
+            workflow_runs(where: { id: { _in: $ids } }) {
+              status
+            }
+          }
+        `,
+        { ids: runIds }
+      );
+      if (poll.workflow_runs.every((r: any) => r.status === "completed" || r.status === "failed")) break;
+      await new Promise((r) => setTimeout(r, 300));
+    }
 
     const afterData: any = await admin.request(
       gql`

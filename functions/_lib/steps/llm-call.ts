@@ -45,7 +45,7 @@ export async function runLlmCall(
       authorization: `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
-      model: "llama-3.1-8b-instant",
+      model: "openai/gpt-oss-20b",
       messages: [{ role: "user", content: prompt }],
       temperature: 0.2,
     }),
@@ -62,7 +62,8 @@ export async function runLlmCall(
 
   let output: any;
   try {
-    output = JSON.parse(content);
+    const stripped = content.replace(/^```(?:json)?\s*/i, "").replace(/```\s*$/, "").trim();
+    output = JSON.parse(stripped);
   } catch {
     output = { raw: content };
   }

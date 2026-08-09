@@ -244,7 +244,19 @@ export async function executeRun(runId: string): Promise<{ status: string }> {
     }
   }
 
+  // consume_org_quota() is the atomic (SELECT...FOR UPDATE) check-and-increment.
+  // The trigger-time check is only a fast pre-check and is not itself atomic
+  // across concurrent triggers, so this is the real enforcement point: a run
+  // is only ever marked "completed" if it actually held a quota unit.
+  const quotaOk = await consumeOrgQuota(run.org_id, 1);
+  if (!quotaOk) {
+    await setStepRun(stepRuns[stepRuns.length - 1].id, {
+      error: "org quota exhausted before this run could be finalized",
+    });
+    await setRunStatus(runId, "failed", true);
+    return { status: "failed" };
+  }
+
   await setRunStatus(runId, "completed", true);
-  await consumeOrgQuota(run.org_id, 1);
   return { status: "completed" };
 }

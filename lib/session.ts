@@ -7,21 +7,26 @@ export interface Session {
   client: GraphQLClient;
 }
 
-export async function signIn(email: string, password: string = DEMO_PASSWORD): Promise<Session> {
+export async function signIn(
+  email: string,
+  password: string = DEMO_PASSWORD,
+  role?: string
+): Promise<Session> {
   const res = await fetch(`${authUrl()}/signin/email-password`, {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify({ email, password }),
   });
-  const json: any = await res.json();
+  const text = await res.text();
   if (!res.ok) {
-    throw new Error(`signin failed for ${email}: ${JSON.stringify(json)}`);
+    throw new Error(`signin failed for ${email}: ${res.status} ${text || "(empty body — likely rate-limited)"}`);
   }
+  const json: any = JSON.parse(text);
   const accessToken = json.session.accessToken;
   const userId = json.session.user.id;
-  const client = new GraphQLClient(graphqlUrl(), {
-    headers: { authorization: `Bearer ${accessToken}` },
-  });
+  const headers: Record<string, string> = { authorization: `Bearer ${accessToken}` };
+  if (role) headers["x-hasura-role"] = role;
+  const client = new GraphQLClient(graphqlUrl(), { headers });
   return { accessToken, userId, client };
 }
 

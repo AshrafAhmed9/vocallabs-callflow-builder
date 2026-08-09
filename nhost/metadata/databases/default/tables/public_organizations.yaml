@@ -1,50 +1,76 @@
 table:
-  schema: public
   name: organizations
-array_relationships:
-  - name: members
-    using:
-      foreign_key_constraint_on:
-        table:
-          schema: public
-          name: org_members
-        column: org_id
-  - name: workflows
-    using:
-      foreign_key_constraint_on:
-        table:
-          schema: public
-          name: workflows
-        column: org_id
+  schema: public
 object_relationships:
   - name: usage
     using:
       manual_configuration:
-        remote_table:
-          schema: public
-          name: org_usage_current_period
         column_mapping:
           id: org_id
+        insertion_order: null
+        remote_table:
+          name: org_usage_current_period
+          schema: public
+array_relationships:
+  - name: members
+    using:
+      foreign_key_constraint_on:
+        column: org_id
+        table:
+          name: org_members
+          schema: public
+  - name: workflows
+    using:
+      foreign_key_constraint_on:
+        column: org_id
+        table:
+          name: workflows
+          schema: public
 select_permissions:
-  - role: owner
-    permission:
-      columns: [id, name, quota_limit, quota_used, period_start, created_at]
-      filter:
-        members:
-          _and:
-            - user_id: { _eq: X-Hasura-User-Id }
-            - role: { _eq: owner }
   - role: editor
     permission:
-      columns: [id, name, quota_limit, quota_used, period_start, created_at]
+      columns:
+        - id
+        - name
+        - quota_limit
+        - quota_used
+        - period_start
+        - created_at
       filter:
         members:
           _and:
-            - user_id: { _eq: X-Hasura-User-Id }
-            - role: { _in: [owner, editor] }
-  - role: viewer
+            - user_id:
+                _eq: X-Hasura-User-Id
+            - role:
+                _in:
+                  - owner
+                  - editor
+  - role: owner
     permission:
-      columns: [id, name, quota_limit, quota_used, period_start, created_at]
+      columns:
+        - id
+        - name
+        - quota_limit
+        - quota_used
+        - period_start
+        - created_at
       filter:
         members:
-          user_id: { _eq: X-Hasura-User-Id }
+          _and:
+            - user_id:
+                _eq: X-Hasura-User-Id
+            - role:
+                _eq: owner
+  - role: viewer
+    permission:
+      columns:
+        - id
+        - name
+        - quota_limit
+        - quota_used
+        - period_start
+        - created_at
+      filter:
+        members:
+          user_id:
+            _eq: X-Hasura-User-Id

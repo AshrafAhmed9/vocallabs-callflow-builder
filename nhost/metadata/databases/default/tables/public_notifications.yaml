@@ -1,6 +1,6 @@
 table:
-  schema: public
   name: notifications
+  schema: public
 object_relationships:
   - name: org
     using:
@@ -8,40 +8,68 @@ object_relationships:
   - name: step_run
     using:
       foreign_key_constraint_on: step_run_id
+select_permissions:
+  - role: editor
+    permission:
+      columns:
+        - id
+        - org_id
+        - step_run_id
+        - channel
+        - message
+        - sent_at
+        - created_at
+      filter:
+        org:
+          members:
+            _and:
+              - user_id:
+                  _eq: X-Hasura-User-Id
+              - role:
+                  _in:
+                    - owner
+                    - editor
+  - role: owner
+    permission:
+      columns:
+        - id
+        - org_id
+        - step_run_id
+        - channel
+        - message
+        - sent_at
+        - created_at
+      filter:
+        org:
+          members:
+            _and:
+              - user_id:
+                  _eq: X-Hasura-User-Id
+              - role:
+                  _eq: owner
+  - role: viewer
+    permission:
+      columns:
+        - id
+        - org_id
+        - step_run_id
+        - channel
+        - message
+        - sent_at
+        - created_at
+      filter:
+        org:
+          members:
+            user_id:
+              _eq: X-Hasura-User-Id
 event_triggers:
   - name: notifications_on_insert
     definition:
       enable_manual: false
       insert:
-        columns: "*"
+        columns: '*'
     retry_conf:
-      num_retries: 3
       interval_sec: 10
+      num_retries: 3
       timeout_sec: 60
-    webhook: "{{NHOST_FUNCTIONS_URL}}/on-notify"
-select_permissions:
-  - role: owner
-    permission:
-      columns: [id, org_id, step_run_id, channel, message, sent_at, created_at]
-      filter:
-        org:
-          members:
-            _and:
-              - user_id: { _eq: X-Hasura-User-Id }
-              - role: { _eq: owner }
-  - role: editor
-    permission:
-      columns: [id, org_id, step_run_id, channel, message, sent_at, created_at]
-      filter:
-        org:
-          members:
-            _and:
-              - user_id: { _eq: X-Hasura-User-Id }
-              - role: { _in: [owner, editor] }
-  - role: viewer
-    permission:
-      columns: [id, org_id, step_run_id, channel, message, sent_at, created_at]
-      filter:
-        org:
-          members:
-            user_id: { _eq: X-Hasura-User-Id }
+    webhook: '{{NHOST_FUNCTIONS_URL}}/on-notify'

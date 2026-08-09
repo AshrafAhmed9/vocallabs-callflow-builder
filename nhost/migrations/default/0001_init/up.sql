@@ -1,4 +1,11 @@
 -- Core schema for the AI Agent Workflow Builder (VocalLabs call-flow engine demo)
+--
+-- User-referencing columns below are plain uuid, not FKs to auth.users:
+-- the auth schema is owned and migrated independently by the Auth service,
+-- and this project's migrations must not assume a startup/deploy ordering
+-- relative to it. Referential integrity for these is enforced at the
+-- application layer (Hasura relationships still resolve them via remote
+-- relationship / manual object relationship to auth.users).
 
 create extension if not exists pgcrypto;
 
@@ -14,7 +21,7 @@ create table public.organizations (
 create table public.org_members (
   id uuid primary key default gen_random_uuid(),
   org_id uuid not null references public.organizations(id) on delete cascade,
-  user_id uuid not null references auth.users(id) on delete cascade,
+  user_id uuid not null,
   role text not null check (role in ('owner', 'editor', 'viewer')),
   created_at timestamptz not null default now(),
   unique (org_id, user_id)
@@ -25,7 +32,7 @@ create table public.workflows (
   org_id uuid not null references public.organizations(id) on delete cascade,
   name text not null,
   description text,
-  created_by uuid not null references auth.users(id),
+  created_by uuid not null,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -56,7 +63,7 @@ create table public.workflow_runs (
   workflow_id uuid not null references public.workflows(id) on delete cascade,
   org_id uuid not null references public.organizations(id) on delete cascade,
   status text not null default 'pending' check (status in ('pending', 'running', 'paused', 'completed', 'failed')),
-  triggered_by uuid references auth.users(id),
+  triggered_by uuid,
   trigger_type text not null default 'manual',
   started_at timestamptz not null default now(),
   finished_at timestamptz,
@@ -76,7 +83,7 @@ create table public.step_runs (
   attempt int not null default 0,
   latency_ms int,
   tokens_used int,
-  approved_by uuid references auth.users(id),
+  approved_by uuid,
   approved_at timestamptz,
   started_at timestamptz,
   finished_at timestamptz

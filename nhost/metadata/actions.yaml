@@ -1,17 +1,17 @@
 actions:
-  - name: triggerWorkflowRun
+  - name: approveStep
     definition:
       kind: synchronous
-      handler: "{{NHOST_FUNCTIONS_URL}}/trigger-workflow-run"
+      handler: '{{NHOST_FUNCTIONS_URL}}/approve-step'
       forward_client_headers: true
       timeout: 60
     permissions:
       - role: owner
       - role: editor
-  - name: approveStep
+  - name: triggerWorkflowRun
     definition:
       kind: synchronous
-      handler: "{{NHOST_FUNCTIONS_URL}}/approve-step"
+      handler: '{{NHOST_FUNCTIONS_URL}}/trigger-workflow-run'
       forward_client_headers: true
       timeout: 60
     permissions:
@@ -20,8 +20,7 @@ actions:
   - name: webhookTriggerRun
     definition:
       kind: synchronous
-      handler: "{{NHOST_FUNCTIONS_URL}}/webhook-trigger"
-      forward_client_headers: false
+      handler: '{{NHOST_FUNCTIONS_URL}}/webhook-trigger'
       timeout: 60
     permissions:
       - role: public
@@ -30,17 +29,5 @@ custom_types:
   input_objects: []
   objects:
     - name: TriggerRunOutput
-      fields:
-        - name: run_id
-          type: uuid!
-        - name: status
-          type: String!
     - name: ApproveStepOutput
-      fields:
-        - name: step_run_id
-          type: uuid!
-        - name: status
-          type: String!
-        - name: run_status
-          type: String!
   scalars: []
