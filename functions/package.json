@@ -4,13 +4,17 @@
   "description": "Nhost serverless functions for the VocalLabs Intelligent Call Flow Builder",
   "main": "index.js",
   "dependencies": {
-    "graphql-request": "^6.1.0"
+    "graphql-request": "^6.1.0",
+    "express": "^4.19.2"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
-    "typescript": "^5.5.0"
+    "@types/express": "^4.17.21",
+    "typescript": "^5.5.0",
+    "tsx": "^4.16.0"
   },
   "scripts": {
+    "start": "tsx server.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
