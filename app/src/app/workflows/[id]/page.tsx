@@ -44,7 +44,7 @@ export default function WorkflowBuilderPage({
     try {
       const data = await client.request<{ workflows_by_pk: Workflow | null }>(
         WORKFLOW_DETAIL,
-        { id }
+        { id, isOwner: role === "owner" }
       );
       setWorkflow(data.workflows_by_pk);
     } catch (err) {
@@ -52,7 +52,7 @@ export default function WorkflowBuilderPage({
     } finally {
       setLoading(false);
     }
-  }, [client, id]);
+  }, [client, id, role]);
 
   useEffect(() => {
     load();

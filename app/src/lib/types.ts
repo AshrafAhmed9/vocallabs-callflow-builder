@@ -63,7 +63,7 @@ export interface WorkflowTrigger {
   workflow_id: string;
   type: TriggerType;
   config: Record<string, unknown>;
-  webhook_token: string | null;
+  webhook_token?: string | null;
   enabled: boolean;
 }
 

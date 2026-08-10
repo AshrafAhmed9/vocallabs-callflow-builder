@@ -33,9 +33,18 @@ export const ORG_USAGE = gql`
   }
 `;
 
-/** Workflow list: steps, triggers, and most recent run in one query. */
+/**
+ * Workflow list: steps, triggers, and most recent run in one query.
+ *
+ * webhook_token is only exposed by Hasura's schema to the `owner` role
+ * (editor/viewer select permissions omit the column entirely, not just
+ * deny access to it — the field doesn't exist in their generated GraphQL
+ * type at all). Requesting it unconditionally breaks the query for
+ * non-owners with a validation error, so it's gated behind @include and
+ * only requested when the caller is an owner.
+ */
 export const WORKFLOW_LIST = gql`
-  query WorkflowList($orgId: uuid!) {
+  query WorkflowList($orgId: uuid!, $isOwner: Boolean!) {
     workflows(where: { org_id: { _eq: $orgId } }, order_by: { updated_at: desc }) {
       id
       org_id
@@ -57,7 +66,7 @@ export const WORKFLOW_LIST = gql`
         workflow_id
         type
         config
-        webhook_token
+        webhook_token @include(if: $isOwner)
         enabled
       }
       runs(order_by: { started_at: desc }, limit: 1) {
@@ -72,7 +81,7 @@ export const WORKFLOW_LIST = gql`
 `;
 
 export const WORKFLOW_DETAIL = gql`
-  query WorkflowDetail($id: uuid!) {
+  query WorkflowDetail($id: uuid!, $isOwner: Boolean!) {
     workflows_by_pk(id: $id) {
       id
       org_id
@@ -94,7 +103,7 @@ export const WORKFLOW_DETAIL = gql`
         workflow_id
         type
         config
-        webhook_token
+        webhook_token @include(if: $isOwner)
         enabled
       }
       runs(order_by: { started_at: desc }, limit: 5) {

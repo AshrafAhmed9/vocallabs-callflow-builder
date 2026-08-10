@@ -27,14 +27,17 @@ export default function WorkflowListPage() {
     setLoading(true);
     setError(null);
     try {
-      const data = await client.request<{ workflows: Workflow[] }>(WORKFLOW_LIST, { orgId });
+      const data = await client.request<{ workflows: Workflow[] }>(WORKFLOW_LIST, {
+        orgId,
+        isOwner: role === "owner",
+      });
       setWorkflows(data.workflows ?? []);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load workflows");
     } finally {
       setLoading(false);
     }
-  }, [client, orgId]);
+  }, [client, orgId, role]);
 
   useEffect(() => {
     load();
