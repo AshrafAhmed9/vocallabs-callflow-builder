@@ -44,7 +44,7 @@ export const WORKFLOW_LIST = gql`
       created_by
       created_at
       updated_at
-      workflow_steps(order_by: { position: asc }) {
+      steps(order_by: { position: asc }) {
         id
         workflow_id
         position
@@ -52,7 +52,7 @@ export const WORKFLOW_LIST = gql`
         name
         config
       }
-      workflow_triggers {
+      triggers {
         id
         workflow_id
         type
@@ -60,7 +60,7 @@ export const WORKFLOW_LIST = gql`
         webhook_token
         enabled
       }
-      workflow_runs(order_by: { started_at: desc }, limit: 1) {
+      runs(order_by: { started_at: desc }, limit: 1) {
         id
         status
         started_at
@@ -81,7 +81,7 @@ export const WORKFLOW_DETAIL = gql`
       created_by
       created_at
       updated_at
-      workflow_steps(order_by: { position: asc }) {
+      steps(order_by: { position: asc }) {
         id
         workflow_id
         position
@@ -89,7 +89,7 @@ export const WORKFLOW_DETAIL = gql`
         name
         config
       }
-      workflow_triggers {
+      triggers {
         id
         workflow_id
         type
@@ -97,7 +97,7 @@ export const WORKFLOW_DETAIL = gql`
         webhook_token
         enabled
       }
-      workflow_runs(order_by: { started_at: desc }, limit: 5) {
+      runs(order_by: { started_at: desc }, limit: 5) {
         id
         status
         started_at

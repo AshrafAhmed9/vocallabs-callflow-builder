@@ -128,7 +128,7 @@ export default function WorkflowListPage() {
       ) : (
         <div className="grid gap-4 sm:grid-cols-2">
           {workflows.map((wf) => {
-            const lastRun = wf.workflow_runs[0];
+            const lastRun = wf.runs[0];
             return (
               <div
                 key={wf.id}
@@ -144,9 +144,9 @@ export default function WorkflowListPage() {
                   <RunButton workflowId={wf.id} />
                 </div>
                 <div className="mt-3 flex items-center gap-3 text-xs text-gray-500">
-                  <span>{wf.workflow_steps.length} steps</span>
+                  <span>{wf.steps.length} steps</span>
                   <span>·</span>
-                  <span>{wf.workflow_triggers.length} triggers</span>
+                  <span>{wf.triggers.length} triggers</span>
                   {lastRun && (
                     <>
                       <span>·</span>

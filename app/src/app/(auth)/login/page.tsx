@@ -77,6 +77,23 @@ export default function LoginPage() {
             Sign up
           </Link>
         </p>
+        <div className="mt-6 rounded-lg border border-gray-200 bg-gray-50 p-4 text-xs text-gray-600">
+          <p className="mb-2 font-medium text-gray-700">Demo accounts (password for all: Passw0rd!2026)</p>
+          <ul className="space-y-1">
+            <li>
+              <span className="font-mono text-gray-900">a-owner@vocallabs.demo</span> — Org A owner
+            </li>
+            <li>
+              <span className="font-mono text-gray-900">a-editor@vocallabs.demo</span> — Org A editor
+            </li>
+            <li>
+              <span className="font-mono text-gray-900">a-viewer@vocallabs.demo</span> — Org A viewer
+            </li>
+            <li>
+              <span className="font-mono text-gray-900">b-owner@vocallabs.demo</span> — Org B owner
+            </li>
+          </ul>
+        </div>
       </div>
     </main>
   );

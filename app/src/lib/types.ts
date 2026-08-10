@@ -83,9 +83,9 @@ export interface Workflow {
   created_by: string;
   created_at: string;
   updated_at: string;
-  workflow_steps: WorkflowStep[];
-  workflow_triggers: WorkflowTrigger[];
-  workflow_runs: WorkflowRunSummary[];
+  steps: WorkflowStep[];
+  triggers: WorkflowTrigger[];
+  runs: WorkflowRunSummary[];
 }
 
 export interface StepRun {

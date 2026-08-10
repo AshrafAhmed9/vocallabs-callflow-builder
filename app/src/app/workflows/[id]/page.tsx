@@ -60,7 +60,7 @@ export default function WorkflowBuilderPage({
 
   async function addStep(type: StepType) {
     if (!workflow) return;
-    const position = workflow.workflow_steps.length;
+    const position = workflow.steps.length;
     await client.request(CREATE_STEP, {
       workflowId: workflow.id,
       position,
@@ -83,7 +83,7 @@ export default function WorkflowBuilderPage({
 
   async function moveStep(step: WorkflowStep, direction: "up" | "down") {
     if (!workflow) return;
-    const steps = [...workflow.workflow_steps].sort((a, b) => a.position - b.position);
+    const steps = [...workflow.steps].sort((a, b) => a.position - b.position);
     const index = steps.findIndex((s) => s.id === step.id);
     const swapWith = direction === "up" ? index - 1 : index + 1;
     if (swapWith < 0 || swapWith >= steps.length) return;
@@ -96,7 +96,7 @@ export default function WorkflowBuilderPage({
   }
 
   async function saveTrigger(
-    trigger: Workflow["workflow_triggers"][number],
+    trigger: Workflow["triggers"][number],
     config: Record<string, unknown>,
     enabled: boolean
   ) {
@@ -113,8 +113,8 @@ export default function WorkflowBuilderPage({
   if (error) return <p className="text-sm text-red-600">{error}</p>;
   if (!workflow) return <p className="text-sm text-gray-500">Workflow not found.</p>;
 
-  const sortedSteps = [...workflow.workflow_steps].sort((a, b) => a.position - b.position);
-  const lastRun = workflow.workflow_runs[0];
+  const sortedSteps = [...workflow.steps].sort((a, b) => a.position - b.position);
+  const lastRun = workflow.runs[0];
   const addableTypes = ALL_STEP_TYPES.filter((t) => !t.ownerOnly || role === "owner");
 
   return (
@@ -187,7 +187,7 @@ export default function WorkflowBuilderPage({
         <div>
           <h2 className="mb-3 text-sm font-semibold text-gray-700">Triggers</h2>
           <div className="space-y-3">
-            {workflow.workflow_triggers.map((trigger) => (
+            {workflow.triggers.map((trigger) => (
               <TriggerEditor
                 key={trigger.id}
                 trigger={trigger}
@@ -195,7 +195,7 @@ export default function WorkflowBuilderPage({
                 onSave={(config, enabled) => saveTrigger(trigger, config, enabled)}
               />
             ))}
-            {workflow.workflow_triggers.length === 0 && (
+            {workflow.triggers.length === 0 && (
               <p className="text-sm text-gray-400">
                 Manual run is always available. No other triggers configured.
               </p>
