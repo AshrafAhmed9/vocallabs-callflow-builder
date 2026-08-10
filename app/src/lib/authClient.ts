@@ -30,12 +30,27 @@ async function post<T>(path: string, body: unknown): Promise<T> {
   return json as T;
 }
 
-export function signInEmailPassword(email: string, password: string) {
-  return post<NhostSession>("/signin/email-password", { email, password });
+// /signin and /signup wrap the session under a `session` key; /token
+// (refresh) returns the session fields flat at the top level. Confirmed
+// directly against the deployed hasura-auth instance — these are genuinely
+// different response shapes, not a typo.
+export async function signInEmailPassword(email: string, password: string) {
+  const data = await post<{ session: NhostSession }>("/signin/email-password", {
+    email,
+    password,
+  });
+  return data.session;
 }
 
-export function signUpEmailPassword(email: string, password: string) {
-  return post<NhostSession | { session: null }>("/signup/email-password", { email, password });
+export async function signUpEmailPassword(
+  email: string,
+  password: string
+): Promise<NhostSession | { session: null }> {
+  const data = await post<{ session: NhostSession | null }>("/signup/email-password", {
+    email,
+    password,
+  });
+  return data.session ?? { session: null };
 }
 
 export function refreshToken(refreshTokenValue: string) {
