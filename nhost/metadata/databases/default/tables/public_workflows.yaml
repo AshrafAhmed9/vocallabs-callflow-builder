@@ -44,7 +44,8 @@ insert_permissions:
         - org_id
         - name
         - description
-        - created_by
+      set:
+        created_by: X-Hasura-User-Id
   - role: owner
     permission:
       check:
@@ -59,7 +60,8 @@ insert_permissions:
         - org_id
         - name
         - description
-        - created_by
+      set:
+        created_by: X-Hasura-User-Id
 select_permissions:
   - role: editor
     permission:

@@ -44,15 +44,19 @@ export default function WorkflowListPage() {
 
   async function handleCreate() {
     if (!orgId || !newName.trim()) return;
-    await client.request(CREATE_WORKFLOW, {
-      orgId,
-      name: newName.trim(),
-      description: newDescription.trim() || null,
-    });
-    setNewName("");
-    setNewDescription("");
-    setShowNew(false);
-    load();
+    try {
+      await client.request(CREATE_WORKFLOW, {
+        orgId,
+        name: newName.trim(),
+        description: newDescription.trim() || null,
+      });
+      setNewName("");
+      setNewDescription("");
+      setShowNew(false);
+      load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to create workflow");
+    }
   }
 
   if (orgLoading) {
