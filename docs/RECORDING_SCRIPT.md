@@ -1,6 +1,6 @@
 # Recording script — Final Task scenario
 
-Local stack must be running (`nhost up --auth-port 18081 --functions-port 18082 --hasura-port 18083`) and seeded (`npm run seed`). Frontend: `cd app && npm run dev`.
+Record against the live hosted app: **https://vocallabs-callflow-builder.vercel.app** (backend already deployed and seeded on Render — nothing to start locally). To run this against a local stack instead, start it with `nhost up --auth-port 18081 --functions-port 18082 --hasura-port 18083`, seed with `npm run seed`, and run the frontend with `cd app && npm run dev`.
 
 Logins (password for all: `Passw0rd!2026`):
 - a-owner@vocallabs.demo — Org A owner
@@ -38,7 +38,7 @@ Logins (password for all: `Passw0rd!2026`):
 - Open the workflow builder as owner, show the webhook trigger's token (owner-only visible column).
 - In a terminal, fire it:
   ```bash
-  curl -s http://localhost:18083/v1/graphql \
+  curl -s https://vocallabs-hasura.onrender.com/v1/graphql \
     -H 'content-type: application/json' \
     -d '{"query":"mutation($id:uuid!,$token:uuid!){ webhookTriggerRun(workflow_id:$id, token:$token, payload:{}) { run_id status } }","variables":{"id":"<workflow_id>","token":"<webhook_token>"}}'
   ```

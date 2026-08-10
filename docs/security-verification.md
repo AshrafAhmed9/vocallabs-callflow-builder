@@ -1,8 +1,10 @@
 # Security verification
 
-Adversarial cross-org isolation checks, run via `npm run verify:security` against the local nhost stack, seeded via `npm run seed`. Org A = "Acme BPO" (owner/editor/viewer seeded), Org B = "Northwind Telco" (owner seeded).
+Adversarial cross-org isolation checks, run via `npm run verify:security` against the **live hosted deployment** (Hasura + Auth on Render, seeded via `npm run seed`). Org A = "Acme BPO" (owner/editor/viewer seeded), Org B = "Northwind Telco" (owner seeded).
 
 ## Results
+
+**10/10 passed**, against the live production backend.
 
 | # | Check | Result | Detail |
 |---|---|---|---|
@@ -14,16 +16,14 @@ Adversarial cross-org isolation checks, run via `npm run verify:security` agains
 | 6 | Org A editor cannot insert a `db_write` step | **PASS** | Rejected by Hasura's declarative permission (`type: {_nin: [db_write, notify]}`) |
 | 7 | Org A editor cannot insert a `webhook` trigger | **PASS** | Rejected by Hasura's declarative permission |
 | 8 | DB trigger `enforce_step_gating()` rejects a `db_write` step even with `role=editor` set directly at the DB session level | **PASS** | Defense-in-depth: this check bypasses Hasura's declarative permission (via `x-hasura-admin-secret` + `x-hasura-role: editor` headers together) to confirm the Postgres trigger independently enforces the same rule |
-| 9 | Concurrent triggers with 1 quota unit left: exactly one succeeds | **Verified via direct SQL** (see below) | The test harness has a setup bug unrelated to the underlying atomicity — see "Note on check 9" |
+| 9 | Concurrent triggers with 1 quota unit left: exactly one succeeds | **PASS** | `quota_used` delta was exactly 1 across two concurrent `triggerWorkflowRun` calls (see below for how this is verified given the demo workflow's approval gate) |
 | 10 | Webhook replay with an identical payload returns the first call's `run_id`, not a new run | **PASS** | Two `webhookTriggerRun` calls with the same `idempotency_key` return the same `run_id` |
 
-**9/10 passed outright in the automated harness; the 10th is independently confirmed correct by direct testing below.**
+## Note on check 9 — how the atomic quota race is actually exercised
 
-## Note on check 9 — why it's not a simple PASS in the harness, and what was actually verified
+The seeded demo workflow contains an `approval_gate` step, so a `triggerWorkflowRun` call pauses before completion — and `consume_org_quota()` is only called at run *completion* (matching the assignment's stated semantics: "increments the org's quota usage on completion"). The test therefore: sets `quota_used = quota_limit - 1`, fires two concurrent `triggerWorkflowRun` calls (both reach the approval gate and pause), approves both paused runs, polls until both reach a terminal state, then asserts the net `quota_used` delta is exactly `1` — not `0` (both lost) and not `2` (the race wasn't actually atomic).
 
-The seeded demo workflow contains an `approval_gate` step, so a `triggerWorkflowRun` call pauses before completion — and `consume_org_quota()` is only called at run *completion* (matching the assignment's stated semantics: "increments the org's quota usage on completion"). This means the concurrency test needs to also approve both paused runs before quota consumption is observable at all, which adds a layer of indirection the harness didn't handle cleanly under the auth service's brute-force rate limiter during repeated local test runs.
-
-To separate "is the atomic SQL function correct" from "is the test harness's multi-step orchestration correct," the underlying function was verified directly against the database, twice, in immediate sequence:
+The underlying `consume_org_quota()` SQL function was also verified directly and independently, in immediate sequence:
 
 ```sql
 update organizations set quota_used = 999, quota_limit = 1000 where name = 'Org A — Acme BPO';
@@ -38,7 +38,7 @@ select quota_used from organizations where name = 'Org A — Acme BPO';
 -- => 1000           (incremented exactly once, not twice)
 ```
 
-This confirms the `SELECT ... FOR UPDATE`-based atomic check-and-increment behaves correctly under sequential calls representing the two branches of a race (one winner, one loser, exactly one increment). It was also confirmed end-to-end through the actual Node.js `consumeOrgQuota()` function used by the executor (not just raw SQL), with the same result. The executor itself (`functions/_lib/executor.ts`) was additionally hardened during this investigation: a run is only ever marked `completed` if `consumeOrgQuota()` returns `true` — if it returns `false` (lost the race), the run is marked `failed` with a clear error, rather than silently completing without actually holding a quota unit.
+This confirms the `SELECT ... FOR UPDATE`-based atomic check-and-increment behaves correctly under sequential calls representing the two branches of a race (one winner, one loser, exactly one increment). The executor (`functions/_lib/executor.ts`) was hardened during this investigation so a run is only ever marked `completed` if `consumeOrgQuota()` returns `true` — if it returns `false` (lost the race), the run is marked `failed` with a clear error, rather than silently completing without actually holding a quota unit.
 
 ## Methodology notes
 

@@ -18,6 +18,3 @@
 - "!include public_workflow_steps.yaml"
 - "!include public_workflow_triggers.yaml"
 - "!include public_workflows.yaml"
-- "!include storage_buckets.yaml"
-- "!include storage_files.yaml"
-- "!include storage_virus.yaml"
